@@ -28,12 +28,12 @@ def handle_request(http_request: str):
     data = '400 Bad Request'
     if request_type == 'GET':
         content = get_file_content(file_path)
-        if content:
-            status_line = '200 Ok'
-            data = content.decode('utf-8')
-        elif "If-Modified-Since" in http_request:
+        if "If-Modified-Since" in http_request:
             status_line = '304 Not Modified'
             data = '304 Not Modified'
+        elif content:
+            status_line = '200 Ok'
+            data = content.decode('utf-8')
         else:
             status_line = '404 Not Found'
             data = '404 Not Found'
