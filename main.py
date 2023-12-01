@@ -11,6 +11,11 @@ def get_file_content(file_path):
         return b''
 
 
+def construct_http_response(status_line: str, data: str) -> bytes:
+    response = f'HTTP/1.1 {status_line}\r\n\r\n{data}'
+    return response.encode('utf-8')
+
+
 def handle_request(http_request: str):
     lines = http_request.split('\r\n')
 
@@ -18,15 +23,21 @@ def handle_request(http_request: str):
     request_line = lines[0]
     request_type = request_line.split()[0]
     file_path = os.getcwd() + request_line.split()[1]
+
+    status_line = '400 Bad Request'
+    data = '400 Bad Request'
     if request_type == 'GET':
         content = get_file_content(file_path)
         if content:
-            return b'HTTP/1.1 200 OK\r\n\r\n' + content
+            status_line = '200 Ok'
+            data = content.decode('utf-8')
+        elif "If-Modified-Since" in http_request:
+            status_line = '304 Not Modified'
+            data = '304 Not Modified'
         else:
-            return b'HTTP/1.1 404 Not Found\r\n\r\nFile not found'
-    else:
-        return b'HTTP/1.1 400 Bad Request\r\n\r\nBad request'
-
+            status_line = '404 Not Found'
+            data = '404 Not Found'
+    return construct_http_response(status_line, data)
 
 
 def run_server(ip_addr: str, port: int):
@@ -44,5 +55,5 @@ def run_server(ip_addr: str, port: int):
 
 if __name__ == '__main__':
     IP_ADDR = 'localhost'
-    PORT_NUMBER = 8005
+    PORT_NUMBER = 8000
     run_server(IP_ADDR, PORT_NUMBER)
