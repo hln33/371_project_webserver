@@ -6,9 +6,9 @@ def get_file_content(file_path):
     if os.path.isfile(file_path):
         with open(file_path, 'rb') as file:
             content = file.read()
-            print(content)
+            return content
     else:
-        print('error')
+        return b''
 
 
 def handle_request(http_request: str):
@@ -18,7 +18,15 @@ def handle_request(http_request: str):
     request_line = lines[0]
     request_type = request_line.split()[0]
     file_path = os.getcwd() + request_line.split()[1]
-    get_file_content(file_path)
+    if request_type == 'GET':
+        content = get_file_content(file_path)
+        if content:
+            return b'HTTP/1.1 200 OK\r\n\r\n' + content
+        else:
+            return b'HTTP/1.1 404 Not Found\r\n\r\nFile not found'
+    else:
+        return b'HTTP/1.1 400 Bad Request\r\n\r\nBad request'
+
 
 
 def run_server(ip_addr: str, port: int):
@@ -29,7 +37,8 @@ def run_server(ip_addr: str, port: int):
     while True:
         client_socket, client_address = server_socket.accept()
         request_data = client_socket.recvfrom(1024)[0].decode('ascii')
-        handle_request(request_data)
+        response = handle_request(request_data)
+        client_socket.send(response)
         client_socket.close()
 
 
