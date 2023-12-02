@@ -1,6 +1,13 @@
 from socket import *
 import os
 
+# STATUS CODES
+OK_CODE = '200 Ok'
+NOT_MODIFIED_CODE = '304 Not Modified'
+BAD_REQUEST_CODE = '400 Bad Request'
+UNAUTHORIZED_CODE = '401 Unauthorized'
+NOT_FOUND_CODE = '404 Not Found'
+
 
 def get_file_content(file_path):
     if os.path.isfile(file_path):
@@ -22,21 +29,25 @@ def handle_request(http_request: str):
     # first line in http request is the request line
     request_line = lines[0]
     request_type = request_line.split()[0]
-    file_path = os.getcwd() + request_line.split()[1]
+    file_name = request_line.split()[1]
+    file_path = os.getcwd() + file_name
 
-    status_line = '400 Bad Request'
-    data = '400 Bad Request'
+    status_line = BAD_REQUEST_CODE
+    data = BAD_REQUEST_CODE
     if request_type == 'GET':
         content = get_file_content(file_path)
-        if "If-Modified-Since" in http_request:
-            status_line = '304 Not Modified'
-            data = '304 Not Modified'
+        if 'If-Modified-Since' in http_request:
+            status_line = NOT_MODIFIED_CODE
+            data = NOT_MODIFIED_CODE
+        elif file_name == 'test_auth' and 'Authorization' not in http_request:
+            status_line = UNAUTHORIZED_CODE
+            data = UNAUTHORIZED_CODE
         elif content:
-            status_line = '200 Ok'
+            status_line = OK_CODE
             data = content.decode('utf-8')
         else:
-            status_line = '404 Not Found'
-            data = '404 Not Found'
+            status_line = NOT_FOUND_CODE
+            data = NOT_FOUND_CODE
     return construct_http_response(status_line, data)
 
 
