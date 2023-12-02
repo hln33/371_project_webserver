@@ -19,7 +19,7 @@ def get_file_content(file_path):
         return b''
 
 
-def construct_http_response(status_line: str, data: str) -> bytes:
+def create_http_response(status_line: str, data: str) -> bytes:
     response = f'HTTP/1.1 {status_line}\r\n\r\n{data}'
     return response.encode('utf-8')
 
@@ -32,6 +32,8 @@ def handle_request(http_request: str):
     file_name = request_line.split()[1]
     file_path = os.getcwd() + file_name
     content = get_file_content(file_path)
+    if not content:
+        return create_http_response(NOT_FOUND_CODE, NOT_FOUND_CODE)
 
     status_line = BAD_REQUEST_CODE
     data = BAD_REQUEST_CODE
@@ -43,23 +45,18 @@ def handle_request(http_request: str):
             elif file_name == '/test_auth.html' and 'Authorization' not in http_request:
                 status_line, data = UNAUTHORIZED_CODE
                 data = UNAUTHORIZED_CODE
-            elif content:
+            else:
                 status_line = OK_CODE
                 data = content.decode('utf-8')
-            else:
-                status_line = NOT_FOUND_CODE
-                data = NOT_FOUND_CODE
         case 'POST':
             if file_name == '/test_content_len_req.html' and 'Content-Length' not in http_request:
                 status_line = LENGTH_REQUIRED_CODE
                 data = LENGTH_REQUIRED_CODE
-            elif content:
+            else:
                 status_line = OK_CODE
                 data = content.decode('utf-8')
-            else:
-                status_line = NOT_FOUND_CODE
-                data = NOT_FOUND_CODE
-    return construct_http_response(status_line, data)
+
+    return create_http_response(status_line, data)
 
 
 def run_server(ip_addr: str, port: int):
