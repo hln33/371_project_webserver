@@ -25,42 +25,40 @@ def construct_http_response(status_line: str, data: str) -> bytes:
 
 
 def handle_request(http_request: str):
-    print(http_request)
-
     lines = http_request.split('\r\n')
-
-    # first line in http request is the request line
     request_line = lines[0]
     request_type = request_line.split()[0]
+
     file_name = request_line.split()[1]
     file_path = os.getcwd() + file_name
     content = get_file_content(file_path)
 
     status_line = BAD_REQUEST_CODE
     data = BAD_REQUEST_CODE
-    if request_type == 'GET':
-        if 'If-Modified-Since' in http_request:
-            status_line = NOT_MODIFIED_CODE
-            data = NOT_MODIFIED_CODE
-        elif file_name == '/test_auth.html' and 'Authorization' not in http_request:
-            status_line = UNAUTHORIZED_CODE
-            data = UNAUTHORIZED_CODE
-        elif file_name == '/test_content_len_req' and 'Content-Length' not in http_request:
-            status_line = LENGTH_REQUIRED_CODE
-            data = LENGTH_REQUIRED_CODE
-        elif content:
-            status_line = OK_CODE
-            data = content.decode('utf-8')
-        else:
-            status_line = NOT_FOUND_CODE
-            data = NOT_FOUND_CODE
-    elif request_type == 'POST':
-        if file_name == '/test_content_len_req.html' and 'Content-Length' not in http_request:
-            status_line = LENGTH_REQUIRED_CODE
-            data = LENGTH_REQUIRED_CODE
-        elif content:
-            status_line = OK_CODE
-            data = content.decode('utf-8')
+    match request_type:
+        case 'GET':
+            if 'If-Modified-Since' in http_request:
+                status_line = NOT_MODIFIED_CODE
+                data = NOT_MODIFIED_CODE
+            elif file_name == '/test_auth.html' and 'Authorization' not in http_request:
+                status_line, data = UNAUTHORIZED_CODE
+                data = UNAUTHORIZED_CODE
+            elif content:
+                status_line = OK_CODE
+                data = content.decode('utf-8')
+            else:
+                status_line = NOT_FOUND_CODE
+                data = NOT_FOUND_CODE
+        case 'POST':
+            if file_name == '/test_content_len_req.html' and 'Content-Length' not in http_request:
+                status_line = LENGTH_REQUIRED_CODE
+                data = LENGTH_REQUIRED_CODE
+            elif content:
+                status_line = OK_CODE
+                data = content.decode('utf-8')
+            else:
+                status_line = NOT_FOUND_CODE
+                data = NOT_FOUND_CODE
     return construct_http_response(status_line, data)
 
 
@@ -71,9 +69,10 @@ def run_server(ip_addr: str, port: int):
 
     while True:
         client_socket, client_address = server_socket.accept()
-        print(client_address)
         request_data = client_socket.recvfrom(1024)[0].decode('ascii')
+
         response = handle_request(request_data)
+
         client_socket.send(response)
         client_socket.close()
 
