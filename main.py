@@ -11,12 +11,9 @@ LENGTH_REQUIRED_CODE = '411 Length Required'
 
 
 def get_file_content(file_path):
-    if os.path.isfile(file_path):
-        with open(file_path, 'rb') as file:
-            content = file.read()
-            return content
-    else:
-        return b''
+    with open(file_path, 'rb') as file:
+        content = file.read()
+        return content
 
 
 def create_http_response(status_line: str, data: str) -> bytes:
@@ -24,16 +21,23 @@ def create_http_response(status_line: str, data: str) -> bytes:
     return response.encode('utf-8')
 
 
-def handle_request(http_request: str):
-    lines = http_request.split('\r\n')
+def parse_http_request(req):
+    lines = req.split('\r\n')
     request_line = lines[0]
     request_type = request_line.split()[0]
-
     file_name = request_line.split()[1]
-    file_path = os.getcwd() + file_name
-    content = get_file_content(file_path)
-    if not content:
+    return request_type, file_name
+
+
+def handle_request(http_request: str):
+    try:
+        request_type, file_name = parse_http_request(http_request)
+        file_path = os.getcwd() + file_name
+        content = get_file_content(file_path)
+    except OSError as e:
         return create_http_response(NOT_FOUND_CODE, NOT_FOUND_CODE)
+    except (IndexError, ValueError) as e:
+        return create_http_response(BAD_REQUEST_CODE, BAD_REQUEST_CODE)
 
     status_line = BAD_REQUEST_CODE
     data = BAD_REQUEST_CODE
@@ -76,5 +80,5 @@ def run_server(ip_addr: str, port: int):
 
 if __name__ == '__main__':
     IP_ADDR = 'localhost'
-    PORT_NUMBER = 8001
+    PORT_NUMBER = 8000
     run_server(IP_ADDR, PORT_NUMBER)
