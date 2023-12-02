@@ -10,12 +10,6 @@ NOT_FOUND_CODE = '404 Not Found'
 LENGTH_REQUIRED_CODE = '411 Length Required'
 
 
-def get_file_content(file_path):
-    with open(file_path, 'rb') as file:
-        content = file.read()
-        return content
-
-
 def create_http_response(status_line: str, data: str) -> bytes:
     response = f'HTTP/1.1 {status_line}\r\n\r\n{data}'
     return response.encode('utf-8')
@@ -27,6 +21,12 @@ def parse_http_request(req):
     request_type = request_line.split()[0]
     file_name = request_line.split()[1]
     return request_type, file_name
+
+
+def get_file_content(file_path):
+    with open(file_path, 'rb') as file:
+        content = file.read()
+        return content
 
 
 def handle_request(http_request: str):
