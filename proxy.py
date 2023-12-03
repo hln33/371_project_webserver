@@ -11,13 +11,23 @@ def run_proxy_server(proxy_ip: str, proxy_port: int, target_ip: str, target_port
         destination_host, destination_port = extract_destination(client_request)
         target_socket = socket(AF_INET, SOCK_STREAM)
         target_socket.connect((target_ip, target_port))
-        print(f"Connected to target server at {target_ip}:{target_port}")
         target_socket.send(client_request.encode('utf-8'))
-        server_response = target_socket.recv(4096)
-        client_socket.send(server_response)
+        server_response = b''
+        while True:
+            data = target_socket.recv(4096)
+            if not data:
+                break
+            server_response += data
+        
+        modified_response = add_custom_header(server_response, '371Proxy: Proxy')
+        client_socket.sendall(modified_response)
         target_socket.close()
         client_socket.close()
 
+def add_custom_header(response: bytes, header: str) -> bytes:
+    # Add a custom header to the existing response
+    header = header.encode('utf-8') + b'\r\n'
+    return response.replace(b'\r\n\r\n', b'\r\n' + header + b'\r\n')
 def extract_destination(request):
 
     lines = request.split('\r\n')
