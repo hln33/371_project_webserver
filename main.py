@@ -47,7 +47,7 @@ def handle_request(http_request: str):
                 status_line = NOT_MODIFIED_CODE
                 data = NOT_MODIFIED_CODE
             elif file_name == '/test_auth.html' and 'Authorization' not in http_request:
-                status_line, data = UNAUTHORIZED_CODE
+                status_line = UNAUTHORIZED_CODE
                 data = UNAUTHORIZED_CODE
             else:
                 status_line = OK_CODE
