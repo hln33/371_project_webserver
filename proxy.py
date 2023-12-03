@@ -9,27 +9,14 @@ def run_proxy_server(proxy_ip: str, proxy_port: int, target_ip: str, target_port
         client_socket, client_address = proxy_socket.accept()
         client_request = client_socket.recv(4096).decode('utf-8')
         destination_host, destination_port = extract_destination(client_request)
-
-        try:
-            target_socket = socket(AF_INET, SOCK_STREAM)
-            target_socket.connect((destination_host, destination_port))
-            target_socket.sendall(client_request.encode('utf-8'))
-            server_response = b''
-            while True:
-                data = target_socket.recv(4096)
-                if not data:
-                    break
-                server_response += data
-
-            
-            client_socket.sendall(server_response)
-
-        except Exception as e:
-            print(f"Error: {e}")
-            client_socket.sendall(b"HTTP/1.1 500 Internal Server Error\r\n\r\nProxy Error")
-        finally:
-            target_socket.close()
-            client_socket.close()
+        target_socket = socket(AF_INET, SOCK_STREAM)
+        target_socket.connect((target_ip, target_port))
+        print(f"Connected to target server at {target_ip}:{target_port}")
+        target_socket.send(client_request.encode('utf-8'))
+        server_response = target_socket.recv(4096)
+        client_socket.send(server_response)
+        target_socket.close()
+        client_socket.close()
 
 def extract_destination(request):
 
@@ -44,7 +31,7 @@ def extract_destination(request):
 
 if __name__ == '__main__':
     PROXY_IP = 'localhost'
-    PROXY_PORT = 8088
+    PROXY_PORT = 8080
     TARGET_IP = 'localhost'
     TARGET_PORT = 8000
 
