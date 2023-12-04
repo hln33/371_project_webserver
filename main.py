@@ -80,5 +80,5 @@ def run_server(ip_addr: str, port: int):
 
 if __name__ == '__main__':
     IP_ADDR = 'localhost'
-    PORT_NUMBER = 8001
+    PORT_NUMBER = 8000
     run_server(IP_ADDR, PORT_NUMBER)
