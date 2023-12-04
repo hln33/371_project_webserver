@@ -11,7 +11,10 @@ LENGTH_REQUIRED_CODE = '411 Length Required'
 
 
 def create_http_response(status_line: str, data: str) -> bytes:
-    response = f'HTTP/1.1 {status_line}\r\n\r\n{data}'
+    response = f'HTTP/1.1 {status_line}\r\n'
+    response += '\r\n'
+    if data:
+        response += data
     return response.encode('utf-8')
 
 
@@ -35,27 +38,24 @@ def handle_request(http_request: str):
         file_path = os.getcwd() + file_name
         content = get_file_content(file_path)
     except OSError as e:
-        return create_http_response(NOT_FOUND_CODE, NOT_FOUND_CODE)
+        return create_http_response(NOT_FOUND_CODE, "")
     except (IndexError, ValueError) as e:
-        return create_http_response(BAD_REQUEST_CODE, BAD_REQUEST_CODE)
+        return create_http_response(BAD_REQUEST_CODE, "")
 
     status_line = BAD_REQUEST_CODE
-    data = BAD_REQUEST_CODE
+    data = ""
     match request_type:
         case 'GET':
             if 'If-Modified-Since' in http_request:
                 status_line = NOT_MODIFIED_CODE
-                data = NOT_MODIFIED_CODE
             elif file_name == '/test_auth.html' and 'Authorization' not in http_request:
                 status_line = UNAUTHORIZED_CODE
-                data = UNAUTHORIZED_CODE
             else:
                 status_line = OK_CODE
                 data = content.decode('utf-8')
         case 'POST':
             if file_name == '/test_content_len_req.html' and 'Content-Length' not in http_request:
                 status_line = LENGTH_REQUIRED_CODE
-                data = LENGTH_REQUIRED_CODE
             else:
                 status_line = OK_CODE
                 data = content.decode('utf-8')
@@ -80,5 +80,5 @@ def run_server(ip_addr: str, port: int):
 
 if __name__ == '__main__':
     IP_ADDR = 'localhost'
-    PORT_NUMBER = 8000
+    PORT_NUMBER = 8001
     run_server(IP_ADDR, PORT_NUMBER)
